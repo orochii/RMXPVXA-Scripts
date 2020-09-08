@@ -3,7 +3,7 @@ Common repository for all of my RPG Maker scripts for XP, VX and VXAce. AND MV. 
 
 ## How do I know which one is from what RPG Maker?
 
-Most XP, VX and Ace scripts say at the first couple lines. Sadly I'm not using any naming convention there, sorry.
+XP, VX and Ace scripts start with a tag which denotes what RPG Maker version they are for (i.e. \[XP\]).
 
 As for MV and MZ... 
 - MV has OZ. 
