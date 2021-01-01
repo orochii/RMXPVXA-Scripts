@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc SMT Demon fusion. Requires SMTDemons placed over. v1
+ * @plugindesc SMT Demon fusion. Requires SMTDemons placed over. v1.1
  * @author Orochii Zouveleki
  * ------------------------------------------------------------------------------------------------
  * PARAMETERS
@@ -1248,10 +1248,6 @@
     }
     Scene_FusionResult.prototype.update = function() {
         Scene_MenuBase.prototype.update.call(this);
-        if (this.waitTimer > 0) {
-            this.waitTimer --;
-            return;
-        }
         // Scene appear
         if (this.sceneAppearTimer < this.spritesetAppearTime()) {
             let opac = this.sceneAppearTimer * 255 / this.spritesetAppearTime();
@@ -1262,6 +1258,10 @@
         // Update scene, do stuff.
         if (Input.isTriggered('ok')) {
             this.onClose();
+            return;
+        }
+        if (this.waitTimer > 0) {
+            this.waitTimer --;
             return;
         }
         // Enemies appear
