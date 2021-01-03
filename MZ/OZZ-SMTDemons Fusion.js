@@ -4,8 +4,9 @@
 
 /*:
  * @target MZ
- * @plugindesc SMT Demon fusion. Requires SMTDemons placed over. v1.1
+ * @plugindesc SMT Demon fusion. Requires SMTDemons placed over. v1
  * @author Orochii Zouveleki
+ * @base OZZ-SMTDemons
  * ------------------------------------------------------------------------------------------------
  * PARAMETERS
  * ------------------------------------------------------------------------------------------------
@@ -520,7 +521,7 @@
         return this.isEnabled(this.item());
     };
     Window_FusionSelect.prototype.isEnabled = function(item) {
-        return true; // TODO: Based on if can fuse
+        return true;
     };
     Window_FusionSelect.prototype.makeItemList = function() {
         this._data = [];
@@ -1076,7 +1077,6 @@
         this._resultWindow.active = true;
     }
     Scene_Fusion.prototype.commandDoubleFusion = function() {
-        // TODO: Double Fusion
         this._commandWindow.deactivate();
         this._commandWindow.visible = false;
         this._statusWindow.activate();
@@ -1084,7 +1084,6 @@
         this._statusWindow.clearSelections();
     };
     Scene_Fusion.prototype.commandMultiFusion = function() {
-        // TODO: Double Fusion
         this._commandWindow.deactivate();
         this._commandWindow.visible = false;
         this._statusWindow.activate();
@@ -1112,7 +1111,6 @@
             case 'triple':
                 let r = this._statusWindow.selectedResult();
                 if (r !== null && r.id !== null) {
-                    console.log(r);
                     this._statusWindow.pushSelection();
                     this._resultWindow.setContents(this._statusWindow.selections, r);
                     this.setResultScreen(true);
