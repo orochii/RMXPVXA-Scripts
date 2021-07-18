@@ -58,9 +58,10 @@
     Window_BattleLog.prototype.displayFailure = function(target) {
         Window_BattleLog_displayFailure.call(this, target)
         if (target.result().learntSkill !== undefined) {
-            if (learnSkillText.length === 0) return;
-            var text = learnSkillText.format(target.name(), $dataSkills[target.result().learntSkill].name);
-            this.push("addText", text);
+            if (learnSkillText.length !== 0) {
+                var text = learnSkillText.format(target.name(), $dataSkills[target.result().learntSkill].name);
+                this.push("addText", text);
+            }
             target.result().learntSkill = undefined;
         }
     };
