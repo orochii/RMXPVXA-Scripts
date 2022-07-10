@@ -58,6 +58,12 @@
  * 
  * @param Fusion scene config
  * 
+ * @param Hide skills from result
+ * @parent Fusion scene config
+ * @desc List of skills that will be hidden on result window.
+ * @type skill[]
+ * @default []
+ * 
  * @param Scene appear time
  * @parent Fusion scene config
  * @desc Speed at which scene opacity changes when showing.
@@ -309,6 +315,10 @@
             this.enemyWaitAfterFusionFinish = Number(OZZSMTDF_Param['Wait after fusion finish']); // 300
             this.disappearAnimationId = Number(OZZSMTDF_Param['Disappear animation']); // 1
             this.appearAnimationId = Number(OZZSMTDF_Param['Appear animation']); // 1
+            this.hideSkills = JSON.parse(OZZSMTDF_Param['Hide skills from result']);
+            for (var i = 0; i < this.hideSkills.length; i++) {
+                this.hideSkills[i] = Number(this.hideSkills[i]);
+            }
             // Race fusions
             if (OZZSMTDF_Param['Race fusions'].length != 0) this.raceFusions = JSON.parse(OZZSMTDF_Param['Race fusions']);
             else this.raceFusions = [];
@@ -335,6 +345,9 @@
                 }
                 this.demonFusions[i].result = Number(this.demonFusions[i]['Result']);
             }
+        }
+        IsHidden(skillId) {
+            return this.hideSkills.includes(skillId);
         }
         /**
          * Gets the resulting race out of combining two races (can be equal).
@@ -825,6 +838,7 @@
         } else {
             this._data = [];
         }
+        this._data = this._data.filter(skill => !OZ.smtdf.IsHidden(skill.id));
         this.forceSelect(0);
         this.updateHelp();
     };
@@ -1098,19 +1112,31 @@
         this._statusWindow.clearSelections();
     };
     Scene_Fusion.prototype.commandFusionAccept = function() {
+        // Check for undefined
+        console.log(this._statusWindow.item());
+        if (this._statusWindow.item() === undefined) {
+            this._statusWindow.activate();
+            return;
+        }
         switch (this._statusWindow.mode) {
             case 'double':
                 this._statusWindow.pushSelection();
                 if (this._statusWindow.selectionSize() == 2) {
-                    this._resultWindow.setContents(this._statusWindow.selections, this._statusWindow.selectedResult());
-                    this.setResultScreen(true);
+                    let r = this._statusWindow.selectedResult();
+                    if (r !== null && r.id !== null && !(OZ.smtd.HasDemon(r.id))) {
+                        this._resultWindow.setContents(this._statusWindow.selections, this._statusWindow.selectedResult());
+                        this.setResultScreen(true);
+                    }else{
+                        this._statusWindow.popLastSelection();
+                        this._statusWindow.activate();
+                    }
                 } else {
                     this._statusWindow.activate();
                 }
                 break;
             case 'triple':
                 let r = this._statusWindow.selectedResult();
-                if (r !== null && r.id !== null) {
+                if (r !== null && r.id !== null && !(OZ.smtd.HasDemon(r.id))) {
                     this._statusWindow.pushSelection();
                     this._resultWindow.setContents(this._statusWindow.selections, r);
                     this.setResultScreen(true);

@@ -10,6 +10,10 @@
  * PARAMETERS
  * ------------------------------------------------------------------------------------------------
  * 
+ * @param Return on death
+ * @desc When return-able units die, they will be returned to the bench.
+ * @type boolean
+ * @default true
  * @
  * ------------------------------------------------------------------------------------------------
  * COMMANDS
@@ -170,7 +174,8 @@
     // General code
     class OZ_ActorSummon {
         constructor() {
-            //
+            var params = PluginManager.parameters(PLUGIN_NAME);
+            this.returnOnDeath = params['Return on death']==='true';
         }
         IsInstantSummon(kind) {
             if (kind === true) return false;
@@ -195,8 +200,42 @@
      * Battlers and party modifications
      */
     //#region Game_Actor additions
+    OZZActorSummon_Game_BattlerBase_meetsSkillConditions = Game_BattlerBase.prototype.meetsSkillConditions;
+    Game_BattlerBase.prototype.meetsSkillConditions = function(skill) {
+        return OZZActorSummon_Game_BattlerBase_meetsSkillConditions.call(this,skill) && this.canUseSummonSkill(skill);
+    };
+    Game_BattlerBase.prototype.canUseSummonSkill = function(skill) {
+        let summonKind = OZ.actorSummon.IsSummon(skill.id);
+        if (typeof summonKind !== 'undefined') {
+            // Check if there's space in your party.
+            let availableSlots = $gameParty.maxBattleMembers() - $gameParty.currentMaxBattleMembers();
+            if (availableSlots < 1) return false;
+            // Check if there's valid targets to summon.
+            if (!OZ.actorSummon.IsInstantSummon(summonKind)) {
+                let list = $gameParty.getSummons(summonKind);
+                if (list < 1) return false;
+            }
+        }
+        return true;
+    }
+
     Game_Battler.prototype.canReturn = function() {
         return false;
+    }
+    Game_Battler.prototype.returnUnit = function() {
+        // I guess enemies can escape?
+        this.escape();
+    }
+    Game_Actor.prototype.returnUnit = function() {
+        let reset = this.resetOnReturn;
+        if (typeof reset !== 'undefined' && reset) {
+            // Actor is fully removed from party
+            $gameParty.removeActor(this.actorId());
+        } else {
+            // Actor will remove itself from the battle members
+            let idx = $gameParty.allMembers().indexOf(this);
+            $gameParty.sendToBack(idx);
+        }
     }
     Game_Actor.prototype.setSummon = function(actorId) {
         this.actorSummonId = Number(actorId);
@@ -204,6 +243,13 @@
     Game_Actor.prototype.canReturn = function() {
         return typeof this.actor().meta.noreturn === 'undefined';
     }
+    OZZActorSummon_Game_Actor_performCollapse = Game_Actor.prototype.performCollapse;
+    Game_Actor.prototype.performCollapse = function() {
+        OZZActorSummon_Game_Actor_performCollapse.call(this);
+        if (OZ.actorSummon.returnOnDeath && this.canReturn()) {
+            this.returnUnit();
+        }
+    };
     Game_Enemy.prototype.canReturn = function() {
         return typeof this.enemy().meta.noreturn === 'undefined';
     }
@@ -282,12 +328,9 @@
     var OZZActorSummon_Game_Party_addActor = Game_Party.prototype.addActor;
     Game_Party.prototype.addActor = function(actorId) {
         let actorSize = this.allMembers().length;
-        console.log(actorSize);
         OZZActorSummon_Game_Party_addActor.call(this, actorId);
-        console.log(this.allMembers().length);
         // If there was a change in size (adding actor was successful), try upping the battle members size.
         if (actorSize < this.allMembers().length) {
-            console.log("Change detected");
             // Check if there is any size on party
             if (this.currentMaxBattleMembers() < this.maxBattleMembers()) {
                 // Put on bottom of active party
@@ -493,6 +536,7 @@
         // If it's not a summon skill, let's do other stuff
         let summonKind = OZ.actorSummon.IsSummon(skill.id);
         if (typeof summonKind !== 'undefined') {
+            //if ()
             action.setSkill(skill.id);
             BattleManager.actor().setLastBattleSkill(skill);
             if (OZ.actorSummon.IsInstantSummon(summonKind)) {
@@ -547,22 +591,7 @@
         let returnKind = OZ.actorSummon.IsReturn(data.id);
         if (typeof returnKind !== 'undefined' && target.canReturn()) {
             // user: this.subject()
-            if (target.isActor()) {
-                let reset = target.resetOnReturn;
-                if (typeof reset !== 'undefined' && reset) {
-                    // Actor is fully removed from party
-                    console.log("Return: Removing actor.");
-                    $gameParty.removeActor(target.actorId());
-                } else {
-                    // Actor will remove itself from the battle members
-                    console.log("Return: Throw actor back.");
-                    let idx = $gameParty.allMembers().indexOf(target);
-                    $gameParty.sendToBack(idx);
-                }
-            } else { 
-                // I guess enemies can escape?
-                target.escape();
-            }
+            target.returnUnit();
             // Set action as effective.
             this.makeSuccess(target);
         } 
@@ -582,7 +611,6 @@
                             actor.resetOnReturn = !$gameParty.allMembers().includes(actor);
                             // Summon actor
                             if (actor.resetOnReturn) {
-                                console.log(actor);
                                 // When originally the actor wasn't part of the party.
                                 $gameParty.addActor(actorSummonId);
                             } else {
@@ -643,3 +671,24 @@
     //#endregion
     /// End of Plugin
 })();
+
+/* 
+
+-OPTION A-
+
+-OPTION B-
+BattleManager.update = function(timeActive) {
+    $gameParty.battleMembers().forEach(a => {
+        let result = a.result();
+        if (result.addedStates.length > 0) {
+            console.log(result);
+        }
+    });
+    if (!this.isBusy() && !this.updateEvent()) {
+        this.updatePhase(timeActive);
+    }
+    if (this.isTpb()) {
+        this.updateTpbInput();
+    }
+};
+*/
