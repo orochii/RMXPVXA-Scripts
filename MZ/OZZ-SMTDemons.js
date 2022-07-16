@@ -27,12 +27,6 @@
  * @desc Determines parameter growth on demons.
  * @default base + deltaLevel + (base * deltaLevel / 10) / startLevel
  * 
- * @param Parameter Percent Change per Level
- * @parent General settings
- * @desc The amount of each parameter raised after each level up
- * @type number
- * @default 10
- * 
  * @param Demons settings
  * 
  * @param Default demon class
