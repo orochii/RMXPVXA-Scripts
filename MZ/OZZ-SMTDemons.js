@@ -17,6 +17,16 @@
  * @type actor[]
  * @default []
  * 
+ * @param HP/MP Formula
+ * @parent General settings
+ * @desc Determines growth for HP/MP on demons.
+ * @default base + deltaLevel*2 + (base * deltaLevel / 9) / startLevel
+ * 
+ * @param Parameter Formula
+ * @parent General settings
+ * @desc Determines parameter growth on demons.
+ * @default base + deltaLevel + (base * deltaLevel / 10) / startLevel
+ * 
  * @param Parameter Percent Change per Level
  * @parent General settings
  * @desc The amount of each parameter raised after each level up
@@ -416,20 +426,22 @@
             // 
             this.cachedData = {};
             // Load general settings
-            var OZZSMTD_Param = PluginManager.parameters(PLUGIN_NAME);
+            var params = PluginManager.parameters(PLUGIN_NAME);
             // General settings
-            this.actorList = JSON.parse(OZZSMTD_Param['Actors for demon slots']);
+            this.actorList = JSON.parse(params['Actors for demon slots']);
             for (var i = 0; i < this.actorList.length; i++) {
                 this.actorList[i] = Number(this.actorList[i]);
             }
-            this.defaultClass = Number(OZZSMTD_Param['Default demon class']);
-            this.defaultCharacterName = OZZSMTD_Param['Default character'];
-            this.defaultCharacterIdx = Number(OZZSMTD_Param['Default character index']);
-            this.defaultFaceName = OZZSMTD_Param['Default face'];
-            this.defaultFaceIdx = Number(OZZSMTD_Param['Default face index']);
-            this.paramPercChange = Number(OZZSMTD_Param['Parameter Percent Change per Level']);
+            this.defaultClass = Number(params['Default demon class']);
+            this.defaultCharacterName = params['Default character'];
+            this.defaultCharacterIdx = Number(params['Default character index']);
+            this.defaultFaceName = params['Default face'];
+            this.defaultFaceIdx = Number(params['Default face index']);
+            this.hpmpFormula = params['HP/MP Formula'];
+            this.paramFormula = params['Parameter Formula'];
+            this.paramPercChange = Number(params['Parameter Percent Change per Level']);
             // Demon Race
-            if (OZZSMTD_Param['Demon races'].length != 0) this.demonRaces = JSON.parse(OZZSMTD_Param['Demon races']);
+            if (params['Demon races'].length != 0) this.demonRaces = JSON.parse(params['Demon races']);
             else this.demonRaces = [];
             for (var i = 0; i < this.demonRaces.length; i++) {
                 this.demonRaces[i] = JSON.parse(this.demonRaces[i]);
@@ -437,7 +449,7 @@
                 this.demonRaces[i].defaultPersonality = Number(this.demonRaces[i]['Default personality']);
             }
             // Demon personalities
-            if (OZZSMTD_Param['Demon personalities'].length != 0) this.demonPersonalities = JSON.parse(OZZSMTD_Param['Demon personalities']);
+            if (params['Demon personalities'].length != 0) this.demonPersonalities = JSON.parse(params['Demon personalities']);
             else this.demonPersonalities = [];
             for (var i = 0; i < this.demonPersonalities.length; i++) {
                 this.demonPersonalities[i] = JSON.parse(this.demonPersonalities[i]);
@@ -716,14 +728,14 @@
         // Check if this actor is imitating a specific enemy
         if (typeof this.imitateEnemy !== 'undefined') {
             // Get parameter from enemy
-            let baseParam = $dataEnemies[this.imitateEnemy].params[paramId];
+            let base = $dataEnemies[this.imitateEnemy].params[paramId];
             let startLevel = OZ.smtd.GetStartingLevel(this.imitateEnemy);
-            let currLevel = this._level;
-            let deltaLevel = currLevel - startLevel;
-            let chngParam = (baseParam * OZ.smtd.paramPercChange * deltaLevel / 100) / startLevel;
-            chngParam = Math.floor(chngParam);
+            let level = this._level;
+            let deltaLevel = level - startLevel;
             // Calculate parameter
-            return baseParam + chngParam;
+            if (paramId==1 && base==0) return 0;
+            if (paramId < 2) return Math.floor(eval(OZ.smtd.hpmpFormula));
+            return Math.floor(eval(OZ.smtd.paramFormula));
         }
         // Otherwise return normal parameters
         return OZSMTD_Game_Actor_paramBase.call(this, paramId);

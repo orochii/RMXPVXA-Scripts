@@ -206,10 +206,11 @@
     };
     Game_BattlerBase.prototype.canUseSummonSkill = function(skill) {
         let summonKind = OZ.actorSummon.IsSummon(skill.id);
+        let isReturn = OZ.actorSummon.IsReturn(skill.id);
         if (typeof summonKind !== 'undefined') {
             // Check if there's space in your party.
             let availableSlots = $gameParty.maxBattleMembers() - $gameParty.currentMaxBattleMembers();
-            if (availableSlots < 1) return false;
+            if (availableSlots < 1 && typeof isReturn === 'undefined') return false;
             // Check if there's valid targets to summon.
             if (!OZ.actorSummon.IsInstantSummon(summonKind)) {
                 let list = $gameParty.getSummons(summonKind);
@@ -401,13 +402,14 @@
         this._currentMaxBattleMembers = value.clamp(1, this.maxBattleMembers());
     }
     Game_Party.prototype.getSummons = function(kind) {
+        if (kind === true) return $gameParty.benchedMembers().filter(member => member.isAlive());
         if (typeof this._summons === 'undefined') return [];
         let kindList = this._summons[kind];
         if (typeof kindList === 'undefined') return [];
         let actorAry = [];
         kindList.forEach(id => {
             let act = $gameActors.actor(id);
-            if(typeof act !== 'undefined') actorAry.push(act);
+            if(typeof act !== 'undefined' && act.isAlive()) actorAry.push(act);
         });
         return actorAry;
     }
@@ -471,15 +473,7 @@
     };
     Window_SummonList.prototype.makeItemList = function() {
         // TODO: Actor list
-        switch(this.kind) {
-            case true:
-                // All actors in bench.
-                this._data = $gameParty.benchedMembers();
-                return;
-            default:
-                this._data = $gameParty.getSummons(this.kind);
-        }
-        this._data = [];
+        this._data = $gameParty.getSummons(this.kind);
     };
     Window_SummonList.prototype.refresh = function() {
         this.makeItemList();
@@ -589,13 +583,19 @@
         // Add effects of negotiation skill here
         let data = this.item();
         let returnKind = OZ.actorSummon.IsReturn(data.id);
+        let summonKind = OZ.actorSummon.IsSummon(data.id);
         if (typeof returnKind !== 'undefined' && target.canReturn()) {
+            // Check if it's already summoned.
+            if (typeof summonKind !== 'undefined') {
+                let actorSummonId = this.subject().actorSummonId;
+                let actor = $gameActors.actor(actorSummonId);
+                if ($gameParty.isInFront(actor)) return;
+            }
             // user: this.subject()
             target.returnUnit();
             // Set action as effective.
             this.makeSuccess(target);
-        } 
-        let summonKind = OZ.actorSummon.IsSummon(data.id);
+        }
         if (typeof summonKind !== 'undefined') {
             // Get summon ID
             let actorSummonId = this.subject().actorSummonId;
@@ -649,17 +649,21 @@
             if (index === pendingIndex) {
                 // Add or remove from bench/front
                 const actor = $gameParty.allMembers()[index];
-                if ($gameParty.isInFront(actor)) {
-                    //
-                    $gameParty.sendToBack(index);
-                } else {
-                    //
-                    $gameParty.addToFront(index);
+                if (actor.canReturn() && (actor.isAlive() || $gameParty.isInFront(actor))) {
+                    if ($gameParty.isInFront(actor)) {
+                        //
+                        $gameParty.sendToBack(index);
+                    } else {
+                        //
+                        $gameParty.addToFront(index);
+                    }
                 }
                 this._statusWindow.setPendingIndex(-1);
                 this._statusWindow.refresh();
             } else {
-                $gameParty.swapOrder(index, pendingIndex);
+                if (this.checkIfCanSwap(index, pendingIndex)) {
+                    $gameParty.swapOrder(index, pendingIndex);
+                }
                 this._statusWindow.setPendingIndex(-1);
                 this._statusWindow.redrawItem(index);
             }
@@ -668,27 +672,15 @@
         }
         this._statusWindow.activate();
     };
+
+    Scene_Menu.prototype.checkIfCanSwap = function(i1,i2) {
+        const a1 = $gameParty.allMembers()[i1];
+        const a2 = $gameParty.allMembers()[i2];
+        let movingOut = $gameParty.isInFront(a1) != $gameParty.isInFront(a2);
+        let a1CanMove = a1.canReturn() && (a1.isAlive() || $gameParty.isInFront(a1));
+        let a2CanMove = a2.canReturn() && (a2.isAlive() || $gameParty.isInFront(a2));
+        return (!movingOut || (a1CanMove && a2CanMove));
+    }
     //#endregion
     /// End of Plugin
 })();
-
-/* 
-
--OPTION A-
-
--OPTION B-
-BattleManager.update = function(timeActive) {
-    $gameParty.battleMembers().forEach(a => {
-        let result = a.result();
-        if (result.addedStates.length > 0) {
-            console.log(result);
-        }
-    });
-    if (!this.isBusy() && !this.updateEvent()) {
-        this.updatePhase(timeActive);
-    }
-    if (this.isTpb()) {
-        this.updateTpbInput();
-    }
-};
-*/

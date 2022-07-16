@@ -1,7 +1,7 @@
 //=============================================================================
 // RPG Maker MZ - SMT Demon fusion
 //=============================================================================
-
+//#region Parameters and stuff
 /*:
  * @target MZ
  * @plugindesc SMT Demon fusion. Requires SMTDemons placed over. v1
@@ -99,6 +99,12 @@
  * @desc Wait time after all fusion materials are visible, for fusion to start.
  * @type number
  * @default 120
+ * 
+ * @param Wait before result appear
+ * @parent Fusion scene config
+ * @desc Wait between the result animation and the sprite appearing.
+ * @type number
+ * @default 75
  * 
  * @param Wait after fusion finish
  * @parent Fusion scene config
@@ -267,6 +273,7 @@
  * @param Result
  * @type enemy
  */
+//#endregion
 
 (() => {
     const PLUGIN_NAME = "OZZ-SMTDemons Fusion";
@@ -312,6 +319,7 @@
             this.enemyAnimationWait = Number(OZZSMTDF_Param['Animation Time']); // 120
             this.enemyAnimationEndWait = Number(OZZSMTDF_Param['Animation Ended Time']); // 120
             this.enemyWaitAfterAppear = Number(OZZSMTDF_Param['Wait after appear']); // 120
+            this.enemyWaitBeforeAppear = Number(OZZSMTDF_Param['Wait before result appear']); // 300
             this.enemyWaitAfterFusionFinish = Number(OZZSMTDF_Param['Wait after fusion finish']); // 300
             this.disappearAnimationId = Number(OZZSMTDF_Param['Disappear animation']); // 1
             this.appearAnimationId = Number(OZZSMTDF_Param['Appear animation']); // 1
@@ -1252,6 +1260,9 @@
     Scene_FusionResult.prototype.enemyWaitAfterAppear = function() {
         return OZ.smtdf.enemyWaitAfterAppear; // 60
     }
+    Scene_FusionResult.prototype.enemyWaitBeforeAppear = function() {
+        return OZ.smtdf.enemyWaitBeforeAppear; // 60
+    }
     Scene_FusionResult.prototype.enemyWaitAfterFusionFinish = function() {
         return OZ.smtdf.enemyWaitAfterFusionFinish; // 60
     }
@@ -1315,9 +1326,14 @@
         // Result appear
         if (this.appearedSprites < this.gameEnemies.length) {
             let currEnemy = this.gameEnemies[this.appearedSprites];
-            currEnemy.appear();
             this.showAnimation([currEnemy], this.appearAnimationId());
             this.appearedSprites ++;
+            this.waitTimer = this.enemyWaitBeforeAppear();
+            return;
+        }
+        if (typeof this._resultAppeared === 'undefined') {
+            let currEnemy = this.gameEnemies[this.appearedSprites-1];
+            currEnemy.appear();
             this.waitTimer = this.enemyWaitAfterFusionFinish();
             return;
         }
