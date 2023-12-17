@@ -51,11 +51,17 @@
  * @desc Skill that when used starts the combo sequence.
  * @type skill
  * 
- * @param Combo Action Points
+ * @param Actor Default Combo Action Points
  * @parent Behavior
  * @desc Number of points available every turn for executing combo sequences.
  * @type number
  * @default 7
+ * 
+ * @param Enemy Default Combo Action Points
+ * @parent Behavior
+ * @desc Number of points available every turn for executing combo sequences.
+ * @type number
+ * @default 4
  * 
  * @param Action List
  * @parent Behavior
@@ -115,7 +121,8 @@
             var params = PluginManager.parameters(PLUGIN_NAME);
             // Combo skill
             this.comboSkillId = JSON.parse(params['Combo Skill']);
-            this.comboActionPoints = Number(params['Combo Action Points']);
+            this.actorComboActionPoints = Number(params['Actor Default Combo Action Points']);
+            this.enemyComboActionPoints = Number(params['Enemy Default Combo Action Points']);
             this.visual = {};
             this.visual.windowXFormula = params['Window X Position Formula'];
             this.visual.windowYFormula = params['Window Y Position Formula'];
@@ -189,8 +196,23 @@
     Game_Battler.prototype.changeDeathblowRemaining = function(change) {
         this._deathblowRemaining -= change;
     }
+    Game_Battler.prototype.deathblowMaxActionPoints = function() {
+        return OZ.deathblows.enemyComboActionPoints;
+    }
+    Game_Actor.prototype.deathblowMaxActionPoints = function() {
+        if (typeof this.actor().meta.deathblowMaxAP !== 'undefined') {
+            return Number(this.actor().meta.deathblowMaxAP);
+        }
+        return OZ.deathblows.actorComboActionPoints;
+    }
+    Game_Enemy.prototype.deathblowMaxActionPoints = function() {
+        if (typeof this.enemy().meta.deathblowMaxAP !== 'undefined') {
+            return Number(this.enemy().meta.deathblowMaxAP);
+        }
+        return OZ.deathblows.actorComboActionPoints;
+    }
     Game_Battler.prototype.refillDeathblowRemaining = function() {
-        this._deathblowRemaining = OZ.deathblows.comboActionPoints;
+        this._deathblowRemaining = this.deathblowMaxActionPoints();
     }
     Game_Battler.prototype.getDeathblowInputs = function() {
         return this._deathblowInputs;
@@ -272,6 +294,7 @@
         OZZDB_BattleManager_endAction.call(this);
         if (this._subject === null && prevSubject !== null) {
             prevSubject.setDeathblow(false);
+            prevSubject._deathblowTargets = [];
         }
     };
     var OZZDB_BattleManager_updatePhase = BattleManager.updatePhase;
@@ -281,10 +304,24 @@
             // Check deathblow
             var skillId = this._subject.checkCurrentDeathblows();
             if (skillId === 0 && this._subject.getDeathblowRemaining() > 0) {
+                var autoact = -1;
+                if (Game_BattlerBase.prototype.canInput.call(this._subject) === false) {
+                    // Select the max cost action available first
+                    var _maxCost = 0;
+                    for (var i = 0; i < OZ.deathblows.actionList.length; i++) {
+                        const action = OZ.deathblows.actionList[i];
+                        if (this._subject.getDeathblowRemaining() >= action.costAP) {
+                            if (_maxCost < action.costAP) {
+                                autoact = i;
+                                _maxCost = action.costAP;
+                            }
+                        }
+                    }
+                }
                 // Read inputs.
                 for (var i = 0; i < OZ.deathblows.actionList.length; i++) {
                     const action = OZ.deathblows.actionList[i];
-                    if (Input.isTriggered(action.bindName)) {
+                    if ((Input.isTriggered(action.bindName)&&autoact===-1) || autoact==i) {
                         if (this._subject.getDeathblowRemaining() >= action.costAP) {
                             SoundManager.playCursor();
                             this._subject.pushDeathblowInput(i);
@@ -357,7 +394,7 @@
         this.contents.clear();
         if (subject === null) return;
         // Draw remaining AP
-        var apText = "%1 / %2".format(subject.getDeathblowRemaining(), OZ.deathblows.comboActionPoints);
+        var apText = "%1 / %2".format(subject.getDeathblowRemaining(), subject.deathblowMaxActionPoints());
         this.drawText(apText,0,0,192,"right")
         // Draw options
         for (var i = 0; i < OZ.deathblows.actionList.length; i++) {
