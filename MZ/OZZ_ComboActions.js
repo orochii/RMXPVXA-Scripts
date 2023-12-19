@@ -3,6 +3,20 @@
  * @author Orochii Zouveleki
  * @target MZ
  * 
+ * @help This plugin adds a combo sequence and skills activated by pressing specific 
+ * input sequences. It modifies the way one skill works, which can be the attack 
+ * skill.
+ * 
+ * ACTOR AND ENEMY NOTETAGS:
+ * <deathblowMaxAP:n>
+ * Changes the max AP of the actor/enemy with tag to N, instead of the default, 
+ * specified through the plugin configuration parameters.
+ * 
+ * SKILL NOTETAGS:
+ * <deathblow:n,n,n,...>
+ * Specifies the IDs of the inputs used to execute the deathblow. The input IDs 
+ * correspond to the indexes of the inputs, defined in the Action List parameter.
+ * 
  * @param Visual
  * 
  * @param Window X Position Formula
@@ -68,8 +82,6 @@
  * @desc Bindings active while on map
  * @type struct<ActionType>[]
  * 
- * @help 
- * 
  */
 /*~struct~ActionType:
  * @param Action Name
@@ -99,8 +111,10 @@
  * @max 99
  * @default 1
  */
+
 /*~struct~Deathblow:
  */
+
 // Target works the same, but save target
 // move to enemy (or at least move forward)
 // display UI

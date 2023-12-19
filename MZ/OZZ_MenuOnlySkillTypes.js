@@ -7,6 +7,20 @@
  * @desc Check database Types section. Add IDs of skill types to add to menu here.
  * @type number[]
  * @default []
+ * 
+ * @help Adds skill types that will only show when inside the party menu screens 
+ * (outside of battle).
+ * 
+ * Adds skill types that will only show when inside the party menu screens (outsi
+ * 
+ * This is thought for skill types that you want to either never appear at all in 
+ * battle (i.e. custom mechanics) or that should be added as part of something 
+ * else, like when under specific status for a special mode and whatnot.
+ * 
+ * ACTOR NOTETAGS:
+ * <menuSkillTypes:n>
+ * <menuSkillTypes:1,2,3,4,...>
+ * Adds the skill type(s) only when inside the party menu.
  */
 
 (()=>{
@@ -34,6 +48,13 @@
         var origSkillTypes = OZMOST_Game_Actor_skillTypes.call(this);
         for (var i = 0; i < OZ.menuSkillTypes.menuAddedSkillTypes.length; i++) {
             origSkillTypes.push(OZ.menuSkillTypes.menuAddedSkillTypes[i]);
+        }
+        if (typeof this.actor().meta.menuSkillTypes !== 'undefined') {
+            var list = JSON.parse("["+this.actor().meta.menuSkillTypes+"]");
+            console.log(list);
+            for (const v of list) {
+                origSkillTypes.push(Number(v));
+            }
         }
         const skillTypes = origSkillTypes.sort((a, b) => a - b);
         return skillTypes.filter((x, i, self) => self.indexOf(x) === i);

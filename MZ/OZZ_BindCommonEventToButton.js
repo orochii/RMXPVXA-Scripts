@@ -7,8 +7,9 @@
  * @desc Bindings active while on map
  * @type struct<ButtonBindData>[]
  * 
- * @help This plugin allows binding common events to buttons, in a way that respects RMMV/RMMZ's inner workings. 
- * This shouldn't break rebindings and whatnot unless your preferred rebinding script is badly coded.
+ * @help This plugin allows binding common events to buttons, in a way that 
+ * respects RMMV/RMMZ's inner workings. This shouldn't break rebindings and 
+ * whatnot unless your preferred rebinding script is badly coded.
  * 
  * List of default bindings
  * ------------------------
@@ -24,6 +25,10 @@
  * pageup   (Page Up, Q)
  * pagedown (Page Down, W)
  * debug    (F9)
+ * 
+ * Stinki self-promotion: You can create new bindings using OZZ_Metal, see my 
+ * repo for more (?). 
+ * https://github.com/orochii/RMXPVXA-Scripts/tree/master/MZ
  * 
  * LICENSE:
  * MIT

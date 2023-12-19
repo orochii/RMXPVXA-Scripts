@@ -12,6 +12,20 @@
  * @desc Bindings active while on map
  * @type struct<ButtonBinding>[]
  * @default ["{\"Bind Name\":\"ok\",\"Button code\":\"0\"}","{\"Bind Name\":\"cancel\",\"Button code\":\"1\"}","{\"Bind Name\":\"shift\",\"Button code\":\"2\"}","{\"Bind Name\":\"menu\",\"Button code\":\"3\"}","{\"Bind Name\":\"pageup\",\"Button code\":\"4\"}","{\"Bind Name\":\"pagedown\",\"Button code\":\"5\"}","{\"Bind Name\":\"up\",\"Button code\":\"12\"}","{\"Bind Name\":\"down\",\"Button code\":\"13\"}","{\"Bind Name\":\"left\",\"Button code\":\"14\"}","{\"Bind Name\":\"right\",\"Button code\":\"15\"}"]
+ * 
+ * @help The purpose of this plugin is to feature different extensions to the base 
+ * engine that I have no idea where to fit.
+ * 
+ * Currently its only purpose is to customize the default input bindings, while 
+ * also allowing creating new bindings for use with other things.
+ * 
+ * NOTE:
+ * Currently there's some limitations with inputs (keys, buttons) not being able 
+ * to be duplicated through different bindings, but this implementation was done 
+ * while keeping things as close to the original. Fixing this would require a 
+ * heavier rewrite of the input module, which could break compatibility, so this
+ * is not only the lazy way out but also a bit of a compromise. It still does 
+ * what it should.
  */
 /*~struct~KeyBinding:
  * @param Bind Name
@@ -263,49 +277,6 @@
  * @value 15
  * @default 0
  */
-
-/*
-Input.keyMapper = {
-    9: "tab", // tab
-    13: "ok", // enter
-    16: "shift", // shift
-    17: "control", // control
-    18: "control", // alt
-    27: "escape", // escape
-    32: "ok", // space
-    33: "pageup", // pageup
-    34: "pagedown", // pagedown
-    37: "left", // left arrow
-    38: "up", // up arrow
-    39: "right", // right arrow
-    40: "down", // down arrow
-    45: "escape", // insert
-    81: "pageup", // Q
-    87: "pagedown", // W
-    88: "escape", // X
-    90: "ok", // Z
-    96: "escape", // numpad 0
-    98: "down", // numpad 2
-    100: "left", // numpad 4
-    102: "right", // numpad 6
-    104: "up", // numpad 8
-    120: "debug" // F9
-};
-*/
-/*
-Input.gamepadMapper = {
-    0: "ok", // A
-    1: "cancel", // B
-    2: "shift", // X
-    3: "menu", // Y
-    4: "pageup", // LB
-    5: "pagedown", // RB
-    12: "up", // D-pad up
-    13: "down", // D-pad down
-    14: "left", // D-pad left
-    15: "right" // D-pad right
-};
-*/
 
 (()=>{
     var __filename = document.currentScript.src;
