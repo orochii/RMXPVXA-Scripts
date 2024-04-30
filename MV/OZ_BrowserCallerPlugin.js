@@ -2,41 +2,17 @@
  * @plugindesc Adds buttons to open browser windows.
  * @author Orochii Zouveleki
  * 
- * @param Add to Title
- * @desc Show an option in title command to open a browser.
- * @type boolean
- * @default false
- * @param Title Text
- * @parent Add to Title
- * @desc Text to display on menu.
- * @default Open website
- * @param Title URL
- * @parent Add to Title
- * @desc URL to open when open browser option is selected.
- * @default https://ragnarokrproject.com
- * @param Title URL uses default browser
- * @parent Add to Title
- * @desc If TRUE, opens default browser. If FALSE, creates a child window with NWJS.
- * @type boolean
- * @default false
+ * @param Add Options to Title
+ * @desc Shows options in title command to open a browser.
+ * @type @type struct<BrowserCall>[]
+ * @default []
  * 
- * @param Add to Party Menu
- * @desc Show an option in party menu to open a browser.
- * @type boolean
- * @default false
- * @param Party Menu Text
- * @parent Add to Party Menu
- * @desc Text to display on menu.
- * @default Open website
- * @param Party Menu URL
- * @parent Add to Party Menu
- * @desc URL to open when open browser option is selected.
- * @default https://ragnarokrproject.com
- * @param Party Menu URL uses default browser
- * @parent Add to Party Menu
- * @desc If TRUE, opens default browser. If FALSE, creates a child window with NWJS.
- * @type boolean
- * @default false
+ * @param Add Options to Party Menu
+ * @desc Shows options in party menu to open a browser.
+ * @type @type struct<BrowserCall>[]
+ * @default []
+ * 
+ * @param End
  * 
  * @command browsercall
  * @text Call Browser
@@ -64,6 +40,21 @@
  * browsercall http://google.com default
  */
 
+/*~struct~BrowserCall:
+ * @param Text
+ * @desc Text to be displayed.
+ * @default Open website
+ * 
+ * @param Url
+ * @desc URL to open in browser.
+ * @default https://google.com
+ * 
+ * @param Use Default
+ * @desc Use default browser instead of a new NWJS window.
+ * @type boolean
+ * @default false
+ */
+
 (()=>{
     var __filename;
     (function(){ 
@@ -76,16 +67,16 @@
     class OZ_Browser {
         constructor(){
             var params = PluginManager.parameters(PLUGIN_NAME);
-            this.title = {}
-            this.title.enabled = params["Add to Title"] === "true"
-            this.title.text = params["Title Text"]
-            this.title.url = params["Title URL"]
-            this.title.default = params["Title URL uses default browser"] === "true"
-            this.partyMenu = {}
-            this.partyMenu.enabled = params["Add to Party Menu"] === "true"
-            this.partyMenu.text = params["Party Menu Text"]
-            this.partyMenu.url = params["Party Menu URL"]
-            this.partyMenu.default = params["Party Menu URL uses default browser"] === "true"
+            this.title = JSON.parse(params["Add Options to Title"])
+            for (var i = 0; i < this.title.length; i++) {
+                this.title[i] = JSON.parse(this.title[i]);
+                this.title[i].useDefault = this.title[i]["Use Default"]==="true"
+            }
+            this.partyMenu = JSON.parse(params["Add Options to Party Menu"])
+            for (var i = 0; i < this.partyMenu.length; i++) {
+                this.partyMenu[i] = JSON.parse(this.partyMenu[i]);
+                this.partyMenu[i].useDefault = this.partyMenu[i]["Use Default"]==="true"
+            }
         }
         OpenURL(url,defaultBrowser){
             if (url.length > 0) {
@@ -112,17 +103,26 @@
             OZ.browser.OpenURL(_url,_default);
         }
     };
-    PluginManager.registerCommand(PLUGIN_NAME, "browsercall", args => {
-        const _url = args.Url;
-        const _default = args.Default === "true";
-        OZ.browser.OpenURL(_url,_default);
-    });
+    if(PluginManager.registerCommand !== undefined) {
+        PluginManager.registerCommand(PLUGIN_NAME, "browsercall", args => {
+            const _url = args.Url;
+            const _default = args.Default === "true";
+            OZ.browser.OpenURL(_url,_default);
+        });
+    }
+    //
+    // -----------------------------------------------------------------------------------------------------------
     //
     OZZ_Window_MenuCommand_addOriginalCommands = Window_MenuCommand.prototype.addOriginalCommands;
     Window_MenuCommand.prototype.addOriginalCommands = function() {
         OZZ_Window_MenuCommand_addOriginalCommands.call(this);
         //
-        if (OZ.browser.partyMenu.enabled) this.addCommand(OZ.browser.partyMenu.text, 'browsercall', true);
+        this._browserIdxs = [];
+        for (var a in OZ.browser.partyMenu) {
+            var option = OZ.browser.partyMenu[a];
+            this.addCommand(option.Text, 'browsercall', true);
+            this._browserIdxs.push(this._list.length-1);
+        }
     };
     OZZ_Scene_Menu_createCommandWindow = Scene_Menu.prototype.createCommandWindow;
     Scene_Menu.prototype.createCommandWindow = function() {
@@ -130,15 +130,27 @@
         this._commandWindow.setHandler('browsercall', this.commandBrowserCall.bind(this));
     };
     Scene_Menu.prototype.commandBrowserCall = function() {
-        OZ.browser.OpenURL(OZ.browser.partyMenu.url,OZ.browser.partyMenu.default);
-        this._commandWindow.active = true
+        var curr = this._commandWindow._browserIdxs.indexOf(this._commandWindow.index());
+        if (curr != -1) {
+            var currBrowser = OZ.browser.partyMenu[curr];
+            OZ.browser.OpenURL(currBrowser.Url,currBrowser.useDefault);
+        }
+        this._commandWindow.active = true;
     }
 
+    //
+    // -----------------------------------------------------------------------------------------------------------
     //
     OZZ_Window_TitleCommand_makeCommandList = Window_TitleCommand.prototype.makeCommandList;
     Window_TitleCommand.prototype.makeCommandList = function() {
         OZZ_Window_TitleCommand_makeCommandList.call(this);
-        if (OZ.browser.title.enabled) this.addCommand(OZ.browser.title.text, 'browsercall', true);
+        //
+        this._browserIdxs = [];
+        for (var a in OZ.browser.title) {
+            var option = OZ.browser.title[a];
+            this.addCommand(option.Text, 'browsercall', true);
+            this._browserIdxs.push(this._list.length-1);
+        }
     };
     OZZ_Scene_Title_createCommandWindow = Scene_Title.prototype.createCommandWindow;
     Scene_Title.prototype.createCommandWindow = function() {
@@ -146,7 +158,11 @@
         this._commandWindow.setHandler('browsercall', this.commandBrowserCall.bind(this));
     };
     Scene_Title.prototype.commandBrowserCall = function() {
-        OZ.browser.OpenURL(OZ.browser.title.url,OZ.browser.title.default);
-        this._commandWindow.active = true
+        var curr = this._commandWindow._browserIdxs.indexOf(this._commandWindow.index());
+        if (curr != -1) {
+            var currBrowser = OZ.browser.title[curr];
+            OZ.browser.OpenURL(currBrowser.Url,currBrowser.useDefault);
+        }
+        this._commandWindow.active = true;
     }
 })();
