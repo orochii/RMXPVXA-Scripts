@@ -38,7 +38,21 @@
  * @type boolean
  * @default false
  * 
- * @help To open a browser window using a plugin command, use the following command.
+ * @command browsercall
+ * @text Call Browser
+ * @desc Opens a browser tab with a website.
+ * @arg Url
+ * @default https://ragnarokrproject.com
+ * @desc URL of site to open.
+ * @arg Default
+ * @desc Use default browser (ON) or open a new NWJS window (OFF).
+ * @type boolean
+ * @default false
+ * 
+ * @help ON MZ:
+ * Plugin commands in MZ were improved, use the cool UI.
+ * ON MV:
+ * To open a browser window using a plugin command, use the following command.
  * 
  * browsercall URL
  * browsercall http://google.com
@@ -98,6 +112,11 @@
             OZ.browser.OpenURL(_url,_default);
         }
     };
+    PluginManager.registerCommand(PLUGIN_NAME, "browsercall", args => {
+        const _url = args.Url;
+        const _default = args.Default === "true";
+        OZ.browser.OpenURL(_url,_default);
+    });
     //
     OZZ_Window_MenuCommand_addOriginalCommands = Window_MenuCommand.prototype.addOriginalCommands;
     Window_MenuCommand.prototype.addOriginalCommands = function() {
