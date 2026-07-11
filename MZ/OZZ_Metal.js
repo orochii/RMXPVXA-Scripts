@@ -397,8 +397,8 @@
  * @default custom
  * 
  * @param Contents
- * @type text
- * @default a.atk * 4 - b.def * 2
+ * @type note
+ * @default "a.atk * 4 - b.def * 2"
 */
 
 (() => {
@@ -431,6 +431,7 @@ var __filters=function(e,n,t,r,o,i,l,a){"use strict";var s=function(e,n){return(
             this.formulas = JSON.parse(params['Custom formulas']);
             for (var i = 0; i < this.formulas.length; i++) {
                 this.formulas[i] = JSON.parse(this.formulas[i]);
+                this.formulas[i].Contents = JSON.parse(this.formulas[i].Contents);
                 this.formulas[this.formulas[i].Name] = this.formulas[i];
             }
             this.keybinds = JSON.parse(params['keybindings']);
