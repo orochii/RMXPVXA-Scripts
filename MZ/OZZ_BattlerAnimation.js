@@ -248,8 +248,8 @@ Sprite_Battler.prototype.moveTowardsTarget = function() {
                 for (var j = 0; j < sprites.length; j++) {
                     var s = sprites[j];
                     if (s._battler == t) {
-                        tx += s.x;
-                        ty += s.y;
+                        tx += s._homeX;
+                        ty += s._homeY;
                         if (tw < s.width) tw = s.width;
                         if (th < s.height) th = s.height;
                         count++;
@@ -523,6 +523,12 @@ Sprite_Enemy.prototype.onMoveEnd = function() {
     Sprite_Battler.prototype.onMoveEnd.call(this);
     if (!BattleManager.isBattleEnd()) {
         this.refreshMotion();
+    }
+};
+Sprite_Enemy.prototype.updateStateSprite = function() {
+    this._stateIconSprite.y = -Math.round((this.height + 40) * 0.9);
+    if (this._stateIconSprite.y < 20 - this.y) {
+        this._stateIconSprite.y = 20 - this.y;
     }
 };
 //
